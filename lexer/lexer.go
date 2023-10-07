@@ -7,7 +7,7 @@ import (
 type Lexer struct {
 	input        string
 	position     int  // current position in input (points to current char)
-	readPosition int  // current reading position in input(after curren char)
+	readPosition int  // current reading position in input(after current char)
 	ch           byte // current char under examination
 }
 
@@ -32,21 +32,49 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.skipWhitespace()
 
-	println(string(l.ch))
-
 	switch l.ch {
 	case '=':
-		tok = newToken(token.ASSIGN, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok = token.Token{
+				Type:    token.EQ,
+				Literal: string(ch) + string(l.ch),
+			}
+		} else {
+			tok = newToken(token.ASSIGN, l.ch)
+		}
+	case '!':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok = token.Token{
+				Type: token.NOT_EQ,
+				Literal: string(ch) + string(l.ch),
+			}
+		} else {
+			tok = newToken(token.BANG, l.ch)
+		}
+	case '+':
+		tok = newToken(token.PLUS, l.ch)
+	case '-':
+		tok = newToken(token.MINUS, l.ch)
+	case '/':
+		tok = newToken(token.SLASH, l.ch)
+	case '*':
+		tok = newToken(token.ASTERISK, l.ch)
+	case '<':
+		tok = newToken(token.LT, '<')
+	case '>':
+		tok = newToken(token.GT, '>')
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
+	case ',':
+		tok = newToken(token.COMMA, l.ch)
 	case '(':
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':
 		tok = newToken(token.RPAREN, l.ch)
-	case ',':
-		tok = newToken(token.COMMA, l.ch)
-	case '+':
-		tok = newToken(token.PLUS, l.ch)
 	case '{':
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
@@ -92,10 +120,18 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) readNumber() string {
 	position := l.position
-	for(isDigit(l.ch)) {
+	for isDigit(l.ch) {
 		l.readChar()
 	}
 	return l.input[position:l.position]
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.readPosition]
+	}
 }
 
 func isLetter(ch byte) bool {
